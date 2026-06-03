@@ -16,7 +16,7 @@ export function ChatInterface() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSend = async (userMessage: string) => {
     const newMessages: Message[] = [...messages, { role: 'user', content: userMessage }];
@@ -45,14 +45,17 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+    <div className="flex flex-col flex-1 overflow-hidden bg-white">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center gap-2">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2E7D4F] to-[#3A7D52] flex items-center justify-center text-white text-2xl font-semibold shadow-md">
+          <div className="flex flex-col items-center justify-center h-full gap-3 select-none">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2E7D4F] to-[#3A7D52] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
               W
             </div>
-            <p className="text-gray-500 text-sm mt-1">Start a conversation with Wynn.</p>
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-700">Wynn</p>
+              <p className="text-xs text-gray-400 mt-0.5">Say something interesting.</p>
+            </div>
           </div>
         ) : (
           <>
@@ -60,14 +63,14 @@ export function ChatInterface() {
               <MessageBubble key={i} role={msg.role} content={msg.content} />
             ))}
             {isLoading && (
-              <div className="flex justify-start mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#2E7D4F] flex items-center justify-center text-white text-xs font-semibold mr-2 shrink-0">
+              <div className="flex items-end gap-2 mb-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#2E7D4F] to-[#3A7D52] flex items-center justify-center text-white text-xs font-bold shrink-0">
                   W
                 </div>
-                <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-sm flex gap-1 items-center">
+                <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-md flex gap-1.5 items-center">
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:120ms]" />
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:240ms]" />
                 </div>
               </div>
             )}
