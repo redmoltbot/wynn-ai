@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { straicoChat } from '@/lib/straico';
 import { getWynnSystemPrompt } from '@/lib/wynn-system-prompt';
+import { getHistory, appendMessages } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, userMessage } = await request.json();
+    const { sessionId, userMessage } = await request.json();
 
-    const trimmedHistory = Array.isArray(messages) ? messages.slice(-8) : [];
+    const history = sessionId ? await getHistory(sessionId, 8) : [];
+    const content = await straicoChat(history, userMessage, getWynnSystemPrompt());
 
-    const content = await straicoChat(trimmedHistory, userMessage, getWynnSystemPrompt());
+    if (sessionId) {
+      await appendMessages(sessionId, [
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: content },
+      ]);
+    }
 
     return NextResponse.json({ role: 'assistant', content });
   } catch (error) {

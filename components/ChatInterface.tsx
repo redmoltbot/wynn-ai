@@ -9,10 +9,35 @@ interface Message {
   content: string;
 }
 
+function getSessionId(): string {
+  const stored = localStorage.getItem('wynn-session-id');
+  if (stored) return stored;
+  const id = crypto.randomUUID();
+  localStorage.setItem('wynn-session-id', id);
+  return id;
+}
+
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const id = getSessionId();
+    setSessionId(id);
+
+    fetch(`/api/history?sessionId=${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.messages) && data.messages.length > 0) {
+          setMessages(data.messages);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setHistoryLoaded(true));
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,7 +52,7 @@ export function ChatInterface() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, userMessage }),
+        body: JSON.stringify({ sessionId, userMessage }),
       });
 
       if (!res.ok) throw new Error('Request failed');
@@ -43,6 +68,18 @@ export function ChatInterface() {
       setIsLoading(false);
     }
   };
+
+  if (!historyLoaded) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center bg-white">
+        <div className="flex gap-1.5">
+          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0ms]" />
+          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:120ms]" />
+          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:240ms]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden bg-white">
