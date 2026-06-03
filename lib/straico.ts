@@ -1,7 +1,7 @@
 import { appConfig } from '@/app.config';
 
-interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
+interface Message {
+  role: 'user' | 'assistant';
   content: string;
 }
 
@@ -14,14 +14,30 @@ interface StraicoResponse {
   }>;
 }
 
-export async function straicoChat(messages: ChatMessage[]): Promise<string> {
+export async function straicoChat(
+  history: Message[],
+  userMessage: string,
+  systemPrompt: string
+): Promise<string> {
   const apiKey = appConfig.straicoApiKey;
   if (!apiKey) throw new Error('STRAICO_API_KEY is not set');
 
-  console.log('[straico] model:', appConfig.llmModel);
-  console.log('[straico] key prefix:', apiKey.slice(0, 6));
+  const allMessages: Message[] = [
+    ...history,
+    { role: 'user', content: userMessage },
+  ];
 
-  const res = await fetch('https://api.straico.com/v2/chat/completions', {
+  // claude-haiku-4-5-5 (and some other models) on Straico reject role:system.
+  // Inject the system prompt inline into the first user message instead.
+  const firstUserIdx = allMessages.findIndex((m) => m.role === 'user');
+  if (firstUserIdx !== -1) {
+    allMessages[firstUserIdx] = {
+      ...allMessages[firstUserIdx],
+      content: `[SYSTEM: ${systemPrompt}]\n\n${allMessages[firstUserIdx].content}`,
+    };
+  }
+
+  const res = await fetch('https://api.straico.com/v0/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -29,15 +45,12 @@ export async function straicoChat(messages: ChatMessage[]): Promise<string> {
     },
     body: JSON.stringify({
       model: appConfig.llmModel,
-      messages,
+      messages: allMessages,
     }),
   });
 
-  console.log('[straico] status:', res.status);
-
   if (!res.ok) {
     const text = await res.text();
-    console.error('[straico] error body:', text);
     throw new Error(`Straico ${res.status}: ${text}`);
   }
 
