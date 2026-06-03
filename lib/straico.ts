@@ -18,6 +18,9 @@ export async function straicoChat(messages: ChatMessage[]): Promise<string> {
   const apiKey = appConfig.straicoApiKey;
   if (!apiKey) throw new Error('STRAICO_API_KEY is not set');
 
+  console.log('[straico] model:', appConfig.llmModel);
+  console.log('[straico] key prefix:', apiKey.slice(0, 6));
+
   const res = await fetch('https://api.straico.com/v2/chat/completions', {
     method: 'POST',
     headers: {
@@ -30,9 +33,12 @@ export async function straicoChat(messages: ChatMessage[]): Promise<string> {
     }),
   });
 
+  console.log('[straico] status:', res.status);
+
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Straico API error ${res.status}: ${text}`);
+    console.error('[straico] error body:', text);
+    throw new Error(`Straico ${res.status}: ${text}`);
   }
 
   const data: StraicoResponse = await res.json();
