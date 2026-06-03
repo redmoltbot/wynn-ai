@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ role: 'assistant', content });
   } catch (error) {
-    console.error('Chat API error:', error);
-    return NextResponse.json({ error: 'Failed to process message' }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('Chat API error:', msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
